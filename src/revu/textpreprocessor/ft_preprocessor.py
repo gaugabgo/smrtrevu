@@ -1,3 +1,8 @@
+import re
+import pandas as pd
+import spacy
+from gensim.models.phrases import Phrases, Phraser
+
 def preprocess_fulltext_txt(txt_dir):
     # Specific logic for txt files from PDFs
     return list_of_clean_texts

@@ -1,0 +1,9 @@
+README.md
+setup.cfg
+setup.py
+src/revu.egg-info/PKG-INFO
+src/revu.egg-info/SOURCES.txt
+src/revu.egg-info/dependency_links.txt
+src/revu.egg-info/entry_points.txt
+src/revu.egg-info/requires.txt
+src/revu.egg-info/top_level.txt

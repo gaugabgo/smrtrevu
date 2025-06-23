@@ -4,7 +4,6 @@ import glob
 import re
 import rispy
 import nbib
-from typing import List
 
 
 def parse_nbib_folder(input_folder: str, output_csv_path: str) -> None:

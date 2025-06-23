@@ -1,5 +1,5 @@
-from textpreprocessor.abstract_preprocessor import preprocess_abstract_df
-from textpreprocessor.ft_preprocessor import preprocess_fulltext_txt
+from revu.textpreprocessor.abstract_preprocessor import preprocess_abstract_df
+from revu.textpreprocessor.ft_preprocessor import preprocess_fulltext_txt
 
 def run_preprocessing(data_source, source_type):
     """

@@ -1,7 +1,7 @@
 import click
 from pathlib import Path
-from oa_downloader.download import download_oa_articles  # Adjust if your function lives elsewhere
-from oa_downloader.extract import extract_and_save_pdf_text  # Same here
+from revu.oa_downloader.download import download_oa_articles  # Adjust if your function lives elsewhere
+from revu.oa_downloader.extract import extract_and_save_pdf_text  # Same here
 
 @click.group()
 def cli():
@@ -61,16 +61,3 @@ def extract(pdf_dir, output_dir, method):
         output_directory=output_dir,
         extraction_method=method
     )
-
-# ---------------------
-# Entry Point
-# ---------------------
-if __name__ == '__main__':
-    cli()
-
-# - Example run in command line - 
-# python scripts/run_oadownloader.py download \
-#  --input data/abstract_import/dois.txt \
-#  --output data/abstract_output/oa_metadata.csv \
-#  --pdf-dir data/ft_import \
-#  --email your@email.com

@@ -1,0 +1,14 @@
+click
+spacy
+pandas
+nbib
+matplotlib
+gensim
+umap-learn
+hdbscan
+bertopic
+scikit-learn
+sentence-transformers
+rispy
+pymupdf
+plotly
