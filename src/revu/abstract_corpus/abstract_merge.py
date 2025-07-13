@@ -21,7 +21,7 @@ def merge_csv_files(csv_file_paths, merged_csv_path):
     # Read remaining CSVs, force their columns to match the first
     for path in csv_file_paths[1:]:
         df = pd.read_csv(path, header=0)
-        df.columns = merged_df.columns  # force columns to match first CSV
+        df = df[merged_df.columns]  # force column order, not just names
         merged_df = pd.concat([merged_df, df], ignore_index=True)
     
     # Save merged CSV

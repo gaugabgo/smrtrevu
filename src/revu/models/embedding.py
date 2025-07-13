@@ -1,15 +1,18 @@
 from sentence_transformers import SentenceTransformer
-from bertopic import BERTopic
 from umap import UMAP
 
 def get_embedding_model(name="sentence-transformers/all-MiniLM-L6-v2"):
     return SentenceTransformer(name)
 
-def get_reduced_embeddings(topic_model, texts):
+def get_reduced_embeddings(embedding_model, texts, show_progress=False):
     """
-    Extract and reduce embeddings for visualization from a BERTopic model and a list of texts.
+    Encode and reduce text embeddings for visualization.
+
+    Returns:
+        embeddings (np.ndarray): Original high-dimensional embeddings
+        reduced_embeddings (np.ndarray): 2D embeddings from UMAP
     """
-    embeddings = topic_model._extract_embeddings(texts)
-    reducer_for_vis = UMAP(n_components=2, metric="cosine", random_state=42)
-    reduced_embeddings = reducer_for_vis.fit_transform(embeddings)
-    return reduced_embeddings
+    embeddings = embedding_model.encode(texts, show_progress_bar=show_progress)
+    reducer = UMAP(n_components=2, metric="cosine", random_state=42)
+    reduced_embeddings = reducer.fit_transform(embeddings)
+    return embeddings, reduced_embeddings

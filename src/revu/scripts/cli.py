@@ -2,7 +2,7 @@ import click
 
 # Import commands from various modules
 from revu.scripts.cli_parsers import parse, preprocess_and_save_command, cli_merge_csv_files, cli_deduplicate_csv
-from revu.scripts.cli_modeling import run_model, visualize
+from revu.scripts.cli_modeling import run_model
 from revu.scripts.cli_preprocessing import preprocess_texts
 from revu.scripts.cli_oa import download, extract
 
@@ -25,7 +25,7 @@ cli.add_command(cli_deduplicate_csv, name="deduplicate")
 cli.add_command(preprocess_texts, name="preprocess-texts")
 
 # ----------------------------
-# Modeling Commands
+# Modeling and Visulization Commands
 # ----------------------------
 @click.group()
 def model():
@@ -33,7 +33,6 @@ def model():
     pass
 
 model.add_command(run_model, name="run")
-model.add_command(visualize, name="visualize")
 
 cli.add_command(model)
 
@@ -65,11 +64,18 @@ revu merge
 # Deduplicate merged abstracts
 revu deduplicate 
 
-# Run topic modeling
-revu model run --input_csv parsed.csv --output_csv topics.csv
+# Pre-process texts for modeling
+revu preprocess-texts \
+  --source-type abstract \
+  --input-path data/abstract_classification/testclassification_HPV.csv \
+  --filtering disable
 
-# Visualize topics
-revu model visualize --input_csv topics.csv
+# Run topic modeling + visualizations
+revu model run \
+  --input_csv data/preprocess_out/processed_articles_BE.csv \
+  --output_csv BERTopic_abstract.csv \
+  --output_dir data/modeled_out 
+
 
 # Download OA PDFs
 revu oa download -i dois.txt -o metadata.csv --email user@example.com

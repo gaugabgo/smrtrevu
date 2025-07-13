@@ -4,7 +4,17 @@ import spacy
 from gensim.models.phrases import Phrases, Phraser
 
 def preprocess_abstract_df(df):
-    # Specific logic for abstracts
+    # Combine title + abstract into a new 'text' column
+    df = combine_text_columns(df, title_col="TI", abstract_col="AB", new_col="text")
+
+    # Train phrase models
+    bigram_model, trigram_model = train_phrases_model(df["text"])
+
+    # Apply text preprocessing
+    df["processed_text"] = df["text"].apply(
+        lambda text: preprocess_text(text, bigram_model, trigram_model, custom_stop_words, nlp)
+    )
+
     return df
 
 # Load SpaCy model once at the module level
