@@ -8,3 +8,15 @@ __pycache__/
 *.ipynb
 /build
 .coverage
+/myenv311
+*.csv
+*.pdf
+*.html
+*.json
+/oa_pdfs
+/archive
+/logs
+*.log
+*.png
+*.xml
+/tests/**/*.txt

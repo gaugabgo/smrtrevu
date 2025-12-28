@@ -16,7 +16,7 @@ def deduplicate_csv(input_file, output_file, log_file):
     counts = {'original': len(df)}
     
     # Remove duplicates by DOI, then by Title
-    for col in ['DOI', 'TI']:
+    for col in ['DOI', 'Title']:
         before = len(df)
         df = df.drop_duplicates(subset=col, keep='first')
         counts[col.lower()] = before - len(df)
@@ -27,7 +27,7 @@ def deduplicate_csv(input_file, output_file, log_file):
     log_messages = [
         f"Original entries: {counts['original']}",
         f"Duplicates removed based on DOI: {counts['doi']}",
-        f"Duplicates removed based on Title: {counts['ti']}",
+        f"Duplicates removed based on Title: {counts['title']}",
         f"Final entries after deduplication: {counts['final']}"
     ]
     

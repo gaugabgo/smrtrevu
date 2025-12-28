@@ -1,5 +1,5 @@
 from revu.textpreprocessor.abstract_preprocessor import preprocess_abstract_df
-from revu.textpreprocessor.ft_preprocessor import preprocess_fulltext_txt
+from revu.textpreprocessor.ft_preprocessor import preprocess_fulltext
 
 def run_preprocessing(data_source, source_type):
     """
@@ -15,6 +15,6 @@ def run_preprocessing(data_source, source_type):
     if source_type == "abstract":
         return preprocess_abstract_df(data_source)
     elif source_type == "fulltext":
-        return preprocess_fulltext_txt(data_source)
+        return preprocess_fulltext(data_source)
     else:
         raise ValueError(f"Unknown source type: {source_type}")

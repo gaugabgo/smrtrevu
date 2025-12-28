@@ -1,24 +1,19 @@
 import re
 import pandas as pd
 import spacy
-from gensim.models.phrases import Phrases, Phraser
+from collections import Counter
+
+nlp = spacy.load("en_core_web_sm")
 
 def preprocess_abstract_df(df):
-    # Combine title + abstract into a new 'text' column
     df = combine_text_columns(df, title_col="TI", abstract_col="AB", new_col="text")
 
-    # Train phrase models
-    bigram_model, trigram_model = train_phrases_model(df["text"])
-
-    # Apply text preprocessing
     df["processed_text"] = df["text"].apply(
-        lambda text: preprocess_text(text, bigram_model, trigram_model, custom_stop_words, nlp)
+        lambda text: preprocess_text(text, custom_stop_words, nlp)
     )
+    df["processed_text"] = remove_ubiquitous_words(df["processed_text"], threshold=0.95)
 
     return df
-
-# Load SpaCy model once at the module level
-nlp = spacy.load("en_core_web_sm")
 
 # Define custom stopwords
 custom_stop_words = {
@@ -34,6 +29,39 @@ custom_stop_words = {
     'approach', 'base', 'conclusion'
 }
 
+def remove_ubiquitous_words(processed_texts, threshold=0.95):
+    """Remove words that appear in more than threshold% of documents."""
+    # Count documents containing each word
+    word_doc_count = Counter()
+    total_docs = len(processed_texts)
+    
+    for text in processed_texts:
+        if pd.isna(text) or not isinstance(text, str):
+            continue
+        # Get unique words in this document
+        unique_words = set(text.split())
+        word_doc_count.update(unique_words)
+    
+    # Identify ubiquitous words
+    ubiquitous_words = {
+        word for word, count in word_doc_count.items() 
+        if count / total_docs >= threshold
+    }
+    
+    print(f"Removing {len(ubiquitous_words)} ubiquitous words appearing in >={threshold*100}% of documents:")
+    print(f"  {sorted(ubiquitous_words)}")
+    
+    filtered_texts = []
+    for text in processed_texts:
+        if pd.isna(text) or not isinstance(text, str):
+            filtered_texts.append("")
+        else:
+            words = text.split()
+            filtered_words = [word for word in words if word not in ubiquitous_words]
+            filtered_texts.append(" ".join(filtered_words))
+    
+    return filtered_texts
+
 def clean_tokens(tokens):
     """Remove short and non-alphabetic tokens."""
     return [token for token in tokens if len(token) > 1 and token.isalpha()]
@@ -45,14 +73,7 @@ def combine_text_columns(df, title_col="TI", abstract_col="AB", new_col="text"):
         raise KeyError(f"Missing columns: {title_col} and/or {abstract_col}")
     return df
 
-def train_phrases_model(texts):
-    """Train bigram and trigram phrase models."""
-    tokenized_texts = [text.split() for text in texts.dropna()]
-    bigram = Phrases(tokenized_texts, min_count=5, threshold=10)
-    trigram = Phrases(bigram[tokenized_texts], min_count=3, threshold=5)
-    return Phraser(bigram), Phraser(trigram)
-
-def preprocess_text(text, bigram_model, trigram_model, stop_words, nlp_model):
+def preprocess_text(text, stop_words, nlp_model):
     """Clean and tokenize text, apply phrase models, and lemmatize."""
     if pd.isna(text) or not isinstance(text, str):
         return ""
@@ -69,8 +90,5 @@ def preprocess_text(text, bigram_model, trigram_model, stop_words, nlp_model):
     if not tokens:
         return ""
 
-    bigram_tokens = bigram_model[tokens]
-    trigram_tokens = trigram_model[bigram_tokens]
-
-    final_doc = nlp_model(" ".join(trigram_tokens))
+    final_doc = nlp_model(" ".join(tokens))
     return " ".join([token.lemma_ for token in final_doc])

@@ -19,7 +19,9 @@ setup(
         'sentence-transformers',
         'rispy',
         'pymupdf',
-        'plotly'
+        'plotly',
+        'scipy',
+        'datamapplot'
         # add other dependencies here
     ],
     entry_points={

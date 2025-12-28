@@ -15,4 +15,6 @@ Requires-Dist: sentence-transformers
 Requires-Dist: rispy
 Requires-Dist: pymupdf
 Requires-Dist: plotly
+Requires-Dist: scipy
+Requires-Dist: datamapplot
 Dynamic: requires-dist

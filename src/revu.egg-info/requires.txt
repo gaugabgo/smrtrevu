@@ -12,3 +12,5 @@ sentence-transformers
 rispy
 pymupdf
 plotly
+scipy
+datamapplot

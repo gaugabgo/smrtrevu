@@ -1,0 +1,6 @@
+Tue Aug 19 20:27:47 EDT 2025: Starting downloads
+Tue Aug 19 20:27:47 EDT 2025: Downloading 10.1590_1413-81232018247.15662017.pdf from http://www.scielo.br/pdf/csc/v24n7/1413-8123-csc-24-07-2649.pdf
+Tue Aug 19 20:27:48 EDT 2025: SUCCESS 10.1590_1413-81232018247.15662017.pdf
+Tue Aug 19 20:27:49 EDT 2025: Downloading 10.1371_journal.pone.0270098.pdf from https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0270098&type=printable
+Tue Aug 19 20:27:50 EDT 2025: SUCCESS 10.1371_journal.pone.0270098.pdf
+Tue Aug 19 20:27:51 EDT 2025: Downloads complete

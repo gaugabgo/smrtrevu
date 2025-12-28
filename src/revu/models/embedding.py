@@ -1,18 +1,31 @@
+from transformers.pipelines import pipeline
+import numpy as np
 from sentence_transformers import SentenceTransformer
-from umap import UMAP
 
-def get_embedding_model(name="sentence-transformers/all-MiniLM-L6-v2"):
-    return SentenceTransformer(name)
-
-def get_reduced_embeddings(embedding_model, texts, show_progress=False):
+def get_embeddings(texts, model_name="allenai/scibert_scivocab_uncased", batch_size=32):
     """
-    Encode and reduce text embeddings for visualization.
-
+    Extract embeddings using sentence-transformers.
+    No dimensionality reduction - BERTopic will handle that with UMAP.
+    
+    Args:
+        texts: List of text documents
+        model_name: HuggingFace model identifier
+        batch_size: Batch size for encoding (adjust based on GPU memory)
+        
     Returns:
-        embeddings (np.ndarray): Original high-dimensional embeddings
-        reduced_embeddings (np.ndarray): 2D embeddings from UMAP
+        embeddings (np.ndarray): High-dimensional embeddings
     """
-    embeddings = embedding_model.encode(texts, show_progress_bar=show_progress)
-    reducer = UMAP(n_components=2, metric="cosine", random_state=42)
-    reduced_embeddings = reducer.fit_transform(embeddings)
-    return embeddings, reduced_embeddings
+    print(f"Loading model: {model_name}")
+    embedding_model = SentenceTransformer(model_name)
+    
+    print(f"Extracting embeddings for {len(texts)} documents...")
+    embeddings = embedding_model.encode(
+        texts,
+        show_progress_bar=True,
+        batch_size=batch_size,
+        convert_to_numpy=True
+    )
+    
+    print(f"Embeddings shape: {embeddings.shape}")
+    return embeddings
+

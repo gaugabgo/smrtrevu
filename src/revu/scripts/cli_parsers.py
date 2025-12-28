@@ -52,16 +52,21 @@ def preprocess_and_save_command(input_folder, output_folder):
     print(f"Normalizing {input_folder} and saving to {output_folder}")
 
 @cli.command()
-@click.argument("csv_file_paths", nargs=-1, type=click.Path(exists=True))
+@click.option('--input', '-i', 'csv_file_paths', type=click.Path(exists=True), multiple=True, required=True, help='Input CSV file path(s)')
 @click.option('--output', '-o', 'merged_csv_path', type=click.Path(), required=True, help='Output CSV file path')
 def cli_merge_csv_files(csv_file_paths, merged_csv_path):
+    if not merged_csv_path.endswith('.csv'):
+        merged_csv_path += '.csv'
+    
     merge_csv_files(csv_file_paths, merged_csv_path)
     print(f"Merging {csv_file_paths} and saving to {merged_csv_path}")
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True, file_okay=False))
-@click.argument("output_file", type=click.Path())
-@click.argument("log_file", type=click.Path())
+@click.option('--input', '-i', 'input_file', type=click.Path(exists=True), required=True, help='Input CSV file')
+@click.option('--output', '-o', 'output_file', type=click.Path(), required=True, help='Output CSV file')
+@click.option('--log', '-l', 'log_file', type=click.Path(), required=True, help='Log file path')
 def cli_deduplicate_csv(input_file, output_file, log_file):
+    if not output_file.endswith('.txt'):
+        output_file += '.txt'
     deduplicate_csv(input_file, output_file, log_file)
     print(f"Deduplicating {input_file} and saving to {output_file}")

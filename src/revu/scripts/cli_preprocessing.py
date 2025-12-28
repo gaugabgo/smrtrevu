@@ -2,13 +2,13 @@ import click
 from pathlib import Path
 import pandas as pd
 
-from revu.pipeline.preprocessing_dispatcher import preprocess_abstract_df, preprocess_fulltext_txt
+from revu.pipeline.preprocessing_dispatcher import preprocess_abstract_df, preprocess_fulltext
 
 def run_preprocessing(data_source, source_type):
     if source_type == "abstract":
         return preprocess_abstract_df(data_source)
     elif source_type == "fulltext":
-        return preprocess_fulltext_txt(data_source)
+        return preprocess_fulltext(data_source)
     else:
         raise ValueError(f"Unknown source type: {source_type}")
 

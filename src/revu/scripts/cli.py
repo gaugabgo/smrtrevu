@@ -4,7 +4,7 @@ import click
 from revu.scripts.cli_parsers import parse, preprocess_and_save_command, cli_merge_csv_files, cli_deduplicate_csv
 from revu.scripts.cli_modeling import run_model
 from revu.scripts.cli_preprocessing import preprocess_texts
-from revu.scripts.cli_oa import download, extract
+from revu.scripts.cli_oa import metadata, download, extract
 
 @click.group()
 def cli():
@@ -44,7 +44,8 @@ def oa():
     """Open Access article management"""
     pass
 
-oa.add_command(download)
+oa.add_command(metadata, name="metadata")
+oa.add_command(download, name="download")
 oa.add_command(extract)
 
 cli.add_command(oa)
@@ -52,33 +53,38 @@ cli.add_command(oa)
 """
 Example CL commands:
 # Parse citations
-revu parse nbib data/abstract_import/nbib_raw data/abstract_output/nbib_parsed nbibparsed.csv
-revu parse ris data/abstract_import/ris_raw data/abstract_output/ris_parsed risparsed.csv
+revu parse nbib data/abstract_import/estimand_review/nbib data/estimand_review/abstract_output estimand_nbibparsed.csv
+revu parse ris data/abstract_import/estimand_review/ris data/estimand_review/abstract_output estimand_risparsed.csv
 
 # Normalize RIS
 revu preprocess data/abstract_import/raw_EBSCO_ris data/abstract_output/normalized_ris
 
 # Merge parsed abstract data
-revu merge 
+revu merge -i data/estimand_review/*.csv -o data/estimand_review/abstract_merged.csv
 
 # Deduplicate merged abstracts
-revu deduplicate 
+revu deduplicate -i data/estimand_review/abstract_merged.csv -o data/estimand_review/abstract_deduplicated.csv -l data/estimand_review
 
 # Pre-process texts for modeling
 revu preprocess-texts \
   --source-type abstract \
-  --input-path data/abstract_classification/testclassification_HPV.csv \
+  --input-path data/estimand_review/estimand_urbanhealthpolicy_24Oct2025.csv \
   --filtering disable
 
 # Run topic modeling + visualizations
 revu model run \
-  --input_csv data/preprocess_out/processed_articles_BE.csv \
-  --output_csv BERTopic_abstract.csv \
-  --output_dir data/modeled_out 
+  --input_csv data/estimand_review/processed_estimand_urbanhealthpolicy_24Oct2025.csv \
+  --output_csv estimand_modeled_24Oct2025_scibert.csv \
+  --output_dir data/estimand_review/visualizations \
+  --model_name "allenai/scibert_scivocab_uncased" \
+  --n_neighbors 5 \
+  --min_cluster_size 5
 
+# fetch metadata
+revu oa metadata -i data/BE_DOIs.csv --cache-dir data/ft_import --email gaugabgo.dev@gmail.com
 
 # Download OA PDFs
-revu oa download -i dois.txt -o metadata.csv --email user@example.com
+revu oa download --input data/ft_import/metadata.csv --cache_dir data/ft_output/oa_pdfs
 
 # Extract from OA PDFs
 revu oa extract --pdf-dir oa_pdfs --output-dir oa_texts

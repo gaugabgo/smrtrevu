@@ -1,6 +1,7 @@
 import plotly.express as px
 import pandas as pd
 
+
 def create_document_datamap(reduced_embeddings, topics, texts=None, labels=None):
     """
     Create a 2D document datamap plot (Plotly scatterplot).
