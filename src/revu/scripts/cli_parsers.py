@@ -52,14 +52,22 @@ def preprocess_and_save_command(input_folder, output_folder):
     print(f"Normalizing {input_folder} and saving to {output_folder}")
 
 @cli.command()
-@click.option('--input', '-i', 'csv_file_paths', type=click.Path(exists=True), multiple=True, required=True, help='Input CSV file path(s)')
+@click.option('--input', '-i', 'csv_file_pattern', type=str, required=True, help='Input CSV file path(s) or glob pattern (e.g., "data/*.csv")')
 @click.option('--output', '-o', 'merged_csv_path', type=click.Path(), required=True, help='Output CSV file path')
-def cli_merge_csv_files(csv_file_paths, merged_csv_path):
+def cli_merge_csv_files(csv_file_pattern, merged_csv_path):
+    import glob
+    
+    # Expand glob pattern to get list of files
+    csv_file_paths = glob.glob(csv_file_pattern)
+    
+    if not csv_file_paths:
+        raise click.ClickException(f"No files found matching pattern: {csv_file_pattern}")
+    
     if not merged_csv_path.endswith('.csv'):
         merged_csv_path += '.csv'
     
     merge_csv_files(csv_file_paths, merged_csv_path)
-    print(f"Merging {csv_file_paths} and saving to {merged_csv_path}")
+    print(f"Merging {len(csv_file_paths)} files and saving to {merged_csv_path}")
 
 @cli.command()
 @click.option('--input', '-i', 'input_file', type=click.Path(exists=True), required=True, help='Input CSV file')
