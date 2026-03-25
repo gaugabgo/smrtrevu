@@ -5,9 +5,9 @@ import json
 
 API_KEY     = "MEyGPb6mG78k6SjsFqUZCN"
 SEARCH_STR  = "https://api.openalex.org/works?page=1&filter=title_and_abstract.search:(%22causal+inference%22)+AND+(%22urban+health%22+OR+%22urban+plan*%22+OR+%22urban+environment%22+OR+%22mobility%22+OR+%22geospatial%22+OR+%22spatial%22+OR+%22transport%22+OR+%22environm*%22+OR+%22built+environ*%22),type:article|dissertation|preprint|book-chapter|report|book-section&sort=relevance_score:desc&per_page=10&include_xpac=true&mailto=ui@openalex.org"   
-OUTPUT_FILE = "openalex_CAUSALurbanhealth_results.csv"
+OUTPUT_FILE = "openalex_CAUSALurbanhealth_results_25052026.csv"
 
-SEARCH_STR  = '("causal inference" OR "causal*") AND ("urban health" OR "urban plan*" OR "urban environment" OR "mobility" OR "geospatial" OR "spatial" OR "transport" OR "environm*" OR "built environ*")'
+SEARCH_STR  = '("causal inference" OR "causal*") AND ("urban health" OR "urban plan*" OR "urban environment" OR "policy" OR "mobility" OR "geospatial" OR "spatial" OR "transport" OR "environm*" OR "built environ*")'
 
 TYPE_FILTER = "article|dissertation|preprint|book-chapter|report|book-section"
 

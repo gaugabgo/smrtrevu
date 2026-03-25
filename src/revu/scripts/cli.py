@@ -113,52 +113,42 @@ revu extract-metadata \
 # Pre-process texts for modeling
 revu preprocess-texts \
   --source-type abstract \
-  --input-path openalex_CAUSALurbanhealth_results.csv \
+  --input-path openalex_CAUSALurbanhealth_results_02032026.csv \
   --filtering disable \
-  --checkpoint-dir data/estimand_review/urbanhealth_estimand
-
-# Run topic modeling + visualizations (all-in-one)
-revu model run \
-  --input_csv data/estimand_review/processed_estimand_urbanhealthpolicy_24Oct2025.csv \
-  --output_csv estimand_modeled_24Oct2025_scibert.csv \
-  --output_dir data/estimand_review/visualizations \
-  --model_name "allenai/scibert_scivocab_uncased" \
-  --n_neighbors 5 \
-  --n_components 2 \
-  --min_cluster_size 5
+  --checkpoint-dir data/estimand_review/urbanhealth_causal
 
 # Step 1: Compute embeddings separately (saves to disk)
 revu model embed \
-  --input_csv data/estimand_review/processed_openalex_CAUSALurbanhealth_results.csv \
+  --input_csv processed_openalex_CAUSALurbanhealth_results_02032026.csv \
   --output_path data/estimand_review/estimand_CAUSAL_UH_embeddings.npy \
   --model_name "sentence-transformers/all-MiniLM-L6-v2" \
   --batch_size 32
 
 # Step 2: Run topic modeling with pre-computed embeddings
 revu model fit \
-  --input_csv data/estimand_review/processed_openalex_ESTIMANDurbanhealth_results.csv \
-  --output_csv Estimand_UH_modeled_18Feb2026.csv \
+  --input_csv data/estimand_review/urbanhealth_causal/processed_openalex_CAUSALurbanhealth_results_02032026.csv \
+  --output_csv Estimand_UH_CAUSAL_modeled_3Mar2026.csv \
   --output_dir data/estimand_review \
-  --embeddings_path data/estimand_review/estimand_UH_embeddings.npy \
+  --embeddings_path data/estimand_review/urbanhealth_causal/estimand_CAUSAL_UH_embeddings.npy \
   --model_name "sentence-transformers/all-MiniLM-L6-v2" \
-  --n_neighbors 3 \
-  --n_components 2 \
-  --min_cluster_size 2
+  --n_neighbors 50 \
+  --n_components 10 \
+  --min_cluster_size 100
 
 # Step 3: Reduce embeddings to 2D for visualizations (avoids memory issues)
 revu model reduce \
-  --embeddings_path data/estimand_review/estimand_UH_embeddings.npy \
-  --output_path data/estimand_review/estimand_UH_embedding_2d.npy \
-  --n_neighbors 3 \
-  --min_dist 0.0
+  --embeddings_path data/estimand_review/urbanhealth_causal/estimand_CAUSAL_UH_embeddings.npy \
+  --output_path data/estimand_review/urbanhealth_causal/estimand_UH_CAUSAL_embedding_2d.npy \
+  --n_neighbors 50 \
+  --min_dist 0.1
 
 # Step 4: Create visualizations from existing model with pre-computed 2D embeddings
 revu model visualize \
-  --input_csv data/estimand_review/Estimand_UH_modeled_18Feb2026.csv \
-  --model_path data/estimand_review/bertopic_model \
-  --embeddings_2d_path data/estimand_review/estimand_UH_embedding_2d.npy \
-  --metadata_csv data/estimand_review/Estimand_UH_modeled_18Feb2026.csv \
-  --output_dir data/estimand_review/visualizations
+  --input_csv data/CausalInf_Poster_2026/causalinference_modeled_03Jan2026.csv\
+  --model_path data/CausalInf_Poster_2026/bertopic_model \
+  --embeddings_2d_path data/CausalInf_Poster_2026/embeddings_2d.npy \
+  --metadata_csv data/CausalInf_Poster_2026/metadata_merged.csv \
+  --output_dir data/CausalInf_Poster_2026
 
 # fetch metadata
 revu oa metadata -i data/BE_DOIs.csv --cache-dir data/ft_import --email gaugabgo.dev@gmail.com
@@ -243,8 +233,9 @@ revu biblio visualize \
 
   model evaulator (not part of main cli)
   python3 src/revu/model_evaluator.py \
-  --input_csv data/estimand_review/processed_openalex_CAUSALurbanhealth_results.csv \
-  --embeddings_path data/estimand_review/estimand_CAUSAL_UH_embeddings.npy \
-  --output_dir data/estimand_review
+  --input_csv data/estimand_review/urbanhealth_causal/processed_openalex_CAUSALurbanhealth_results_02032026.csv \
+  --embeddings_path data/estimand_review/urbanhealth_causal/estimand_CAUSAL_UH_embeddings.npy \
+  --model_name sentence-transformers/allenai-specter
+  --output_dir data/estimand_review/urbanhealth_causal
 
 """

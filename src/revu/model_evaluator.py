@@ -107,9 +107,9 @@ def main():
 
     # Define parameter grid for evaluation
     param_grid = ParameterGrid({
-        "min_cluster_size": [15, 50, 100],
-        "n_neighbors": [5, 15, 30],
-        "n_components": [5, 10]
+    "min_cluster_size": [75, 100, 125],
+    "n_neighbors": [40, 50, 60],
+    "n_components": [10]
     })
 
     logger.info(f"\n{'='*60}")
