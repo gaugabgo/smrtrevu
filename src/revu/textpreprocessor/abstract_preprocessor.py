@@ -103,16 +103,7 @@ def preprocess_abstract_df(
 
 # Define custom stopwords
 custom_stop_words = {
-    "data", "analysis", "datum", "score", "method", "risk", "model", "effect", "result",
-    "significant", "use", "can", "association", "year", "ci", "background", "objective", "aim", 
-    "purpose", "introduction", "study", "measurement", "design", "variable", "test",
-    'largely', 'substantially', 'later', 'es', 'fourth', 'end', 'primarily', 
-    'medium', 'eg', 'respond', 'initially', 'lose', 'restrict', 'begin', 'second',
-    'subsequent', 'free', 'immediate', 'close', 'regard', 'like', 'single', 
-    'january', 'december', 'march', 'june', 'july', 'april', 'october', 
-    'september', 'february', 'november', 'have', 'value', 'initial', 'common', 
-    'incidence', 'occur', 'presence', 'month', 'measure', 'scale', 'time', 'day', 
-    'approach', 'base', 'conclusion', 'nan'
+    'background', 'introduction', 'methods', 'methods', 'results', 'conclusion', 'nan'
 }
 
 # Checkpoint utility functions
@@ -173,8 +164,8 @@ def remove_ubiquitous_words(processed_texts, threshold=0.95):
     return filtered_texts
 
 def clean_tokens(tokens):
-    """Remove short and non-alphabetic tokens."""
-    return [token for token in tokens if len(token) > 1 and token.isalpha()]
+    """Remove short, non-alphabetic, and non-English (non-ASCII) tokens."""
+    return [token for token in tokens if len(token) > 1 and token.isalpha() and token.isascii()]
 
 def combine_text_columns(df, title_col="TI", abstract_col="AB", new_col="text"):
     if title_col in df.columns and abstract_col in df.columns:

@@ -9,9 +9,10 @@ from revu.scripts.cli_embeddings import compute_embeddings
 from revu.scripts.cli_reduce_embeddings import reduce_embeddings
 from revu.scripts.cli_preprocessing import preprocess_texts
 from revu.scripts.cli_oa import metadata, download, extract
-from revu.scripts.cli_link_metadata import extract_metadata
+from revu.scripts.cli_link_metadata import link_metadata
 from revu.scripts.cli_bibliographicanalysis import run_bibliometric_analysis, build_network
 from revu.scripts.cli_visu_bibliographic import visualize_bibliometric
+from revu.scripts.cli_coauthorship import coauthorship_analysis
 
 @click.group()
 def cli():
@@ -25,7 +26,7 @@ cli.add_command(parse)
 cli.add_command(preprocess_and_save_command, name="preprocess")
 cli.add_command(cli_merge_csv_files, name="merge")
 cli.add_command(cli_deduplicate_csv, name="deduplicate")
-cli.add_command(extract_metadata, name="extract-metadata")
+cli.add_command(link_metadata, name="extract-metadata")
 
 # ----------------------------
 # Preprocessing (text) Command
@@ -73,6 +74,7 @@ def biblio():
 biblio.add_command(run_bibliometric_analysis, name="analyze")
 biblio.add_command(build_network, name="build-network")
 biblio.add_command(visualize_bibliometric, name="visualize")
+biblio.add_command(coauthorship_analysis, name="coauthorship-analysis")
 
 cli.add_command(biblio)
 
@@ -113,42 +115,44 @@ revu extract-metadata \
 # Pre-process texts for modeling
 revu preprocess-texts \
   --source-type abstract \
-  --input-path openalex_CAUSALurbanhealth_results_02032026.csv \
+  --input-path data/abstract_deduplicated_3Jan2025.csv \
   --filtering disable \
-  --checkpoint-dir data/estimand_review/urbanhealth_causal
+  --checkpoint-dir data/preprocess_checkpints
 
 # Step 1: Compute embeddings separately (saves to disk)
 revu model embed \
-  --input_csv processed_openalex_CAUSALurbanhealth_results_02032026.csv \
-  --output_path data/estimand_review/estimand_CAUSAL_UH_embeddings.npy \
+  --input_csv data/processed_abstract_deduplicated_25Mar2026.csv \
+  --output_path data \
   --model_name "sentence-transformers/all-MiniLM-L6-v2" \
   --batch_size 32
 
 # Step 2: Run topic modeling with pre-computed embeddings
 revu model fit \
-  --input_csv data/estimand_review/urbanhealth_causal/processed_openalex_CAUSALurbanhealth_results_02032026.csv \
-  --output_csv Estimand_UH_CAUSAL_modeled_3Mar2026.csv \
-  --output_dir data/estimand_review \
-  --embeddings_path data/estimand_review/urbanhealth_causal/estimand_CAUSAL_UH_embeddings.npy \
+  --input_csv data/processed_abstract_deduplicated_25Mar2026.csv \
+  --output_csv data/causal_modeled_25Mar2026.csv \
+  --output_dir data \
+  --embeddings_path data/embeddings.npy \
   --model_name "sentence-transformers/all-MiniLM-L6-v2" \
-  --n_neighbors 50 \
-  --n_components 10 \
-  --min_cluster_size 100
+  --n_neighbors 15 \
+  --n_components 5 \
+  --min_cluster_size 100 \
+  --cluster_selection_method eom \
+  --outlier_strategy none
 
 # Step 3: Reduce embeddings to 2D for visualizations (avoids memory issues)
 revu model reduce \
-  --embeddings_path data/estimand_review/urbanhealth_causal/estimand_CAUSAL_UH_embeddings.npy \
-  --output_path data/estimand_review/urbanhealth_causal/estimand_UH_CAUSAL_embedding_2d.npy \
-  --n_neighbors 50 \
+  --embeddings_path data/embeddings.npy \
+  --output_path data \
+  --n_neighbors 15 \
   --min_dist 0.1
 
 # Step 4: Create visualizations from existing model with pre-computed 2D embeddings
 revu model visualize \
-  --input_csv data/CausalInf_Poster_2026/causalinference_modeled_03Jan2026.csv\
-  --model_path data/CausalInf_Poster_2026/bertopic_model \
-  --embeddings_2d_path data/CausalInf_Poster_2026/embeddings_2d.npy \
-  --metadata_csv data/CausalInf_Poster_2026/metadata_merged.csv \
-  --output_dir data/CausalInf_Poster_2026
+  --input_csv data/causal_modeled_25Mar2026.csv \
+  --model_path data/bertopic_model \
+  --embeddings_2d_path data/embeddings_2d.npy \
+  --metadata_csv data/metadata_deduplicated.csv \
+  --output_dir data
 
 # fetch metadata
 revu oa metadata -i data/BE_DOIs.csv --cache-dir data/ft_import --email gaugabgo.dev@gmail.com
@@ -232,10 +236,19 @@ revu biblio visualize \
   --influence_metric h_index_proxy
 
   model evaulator (not part of main cli)
-  python3 src/revu/model_evaluator.py \
-  --input_csv data/estimand_review/urbanhealth_causal/processed_openalex_CAUSALurbanhealth_results_02032026.csv \
-  --embeddings_path data/estimand_review/urbanhealth_causal/estimand_CAUSAL_UH_embeddings.npy \
-  --model_name sentence-transformers/allenai-specter
-  --output_dir data/estimand_review/urbanhealth_causal
+  python src/revu/model_evaluator.py \
+  --input_csv data/processed_abstract_deduplicated_25Mar2026.csv \
+  --embeddings_path data/embeddings.npy \
+  --model_name "sentence-transformers/all-MiniLM-L6-v2"
+  --output_dir data/
+
+revu biblio coauthorship-analysis \
+  --metadata_csv data/causal_metadata_validated.csv \
+  --topic_csv data/causal_modeled_25Mar2026.csv \
+  --output_dir data/coauthorship_results \
+  --per_topic \
+  --min_works_per_topic 15 \
+  --analysis_type all \
+  --affiliation_mode both  
 
 """

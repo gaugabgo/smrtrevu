@@ -22,7 +22,7 @@ setup(
         'plotly',
         'scipy',
         'datamapplot'
-        # add other dependencies here
+   
     ],
     entry_points={
         'console_scripts': [

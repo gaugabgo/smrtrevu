@@ -7,5 +7,5 @@ def get_representation_models():
     """
     return {
         "KeyBERT": KeyBERTInspired(),
-        "MMR": MaximalMarginalRelevance(diversity=0.3)
+        "MMR": MaximalMarginalRelevance(diversity=0.5)
     }

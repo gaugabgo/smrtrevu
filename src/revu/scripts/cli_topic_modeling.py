@@ -4,6 +4,8 @@ import os
 import numpy as np
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
+from gensim.models.coherencemodel import CoherenceModel
+from gensim.corpora.dictionary import Dictionary
 
 from revu.models.dimensionality import get_umap_model
 from revu.models.clustering import get_hdbscan_model
@@ -21,7 +23,9 @@ from revu.models.representations import get_representation_models
 @click.option('--n_neighbors', default=15, help='UMAP n_neighbors parameter')
 @click.option('--n_components', default=5, help='UMAP n_components parameter')
 @click.option('--min_cluster_size', default=30, help='HDBSCAN min_cluster_size parameter')
-def run_topic_modeling(input_csv, output_csv, output_dir, model_name, embeddings_path, save_embeddings, n_neighbors, n_components, min_cluster_size):
+@click.option('--cluster_selection_method', default='eom', type=click.Choice(['eom', 'leaf']), help='HDBSCAN cluster selection method')
+@click.option('--outlier_strategy', default='none', type=click.Choice(['none', 'embeddings', 'c-tf-idf', 'probabilities']), help='BERTopic outlier reduction strategy')
+def run_topic_modeling(input_csv, output_csv, output_dir, model_name, embeddings_path, save_embeddings, n_neighbors, n_components, min_cluster_size, cluster_selection_method, outlier_strategy):
     """
     Run BERTopic topic modeling and save topic assignments to CSV
     """
@@ -85,7 +89,8 @@ def run_topic_modeling(input_csv, output_csv, output_dir, model_name, embeddings
         ),
         hdbscan_model=get_hdbscan_model(
             min_cluster_size=min_cluster_size,
-            metric='euclidean'
+            metric='euclidean',
+            cluster_selection_method=cluster_selection_method
         ),
         vectorizer_model=get_vectorizer_model(
             ngram_range=(1, 2),
@@ -99,6 +104,16 @@ def run_topic_modeling(input_csv, output_csv, output_dir, model_name, embeddings
     print(f"\nFitting BERTopic on {len(texts)} documents with pre-computed embeddings...")
     topics, probs = topic_model.fit_transform(texts, embeddings)
 
+    # ========================================
+    # OUTLIER REDUCTION
+    # ========================================
+    if outlier_strategy != 'none':
+        print(f"\nReducing outliers using strategy: {outlier_strategy}...")
+        new_topics = topic_model.reduce_outliers(texts, topics, strategy=outlier_strategy, probabilities=probs)
+        topic_model.update_topics(texts, topics=new_topics)
+        topics = new_topics
+        print(f"✓ Outlier reduction complete")
+
     # Summary statistics
     num_topics = len(set(topics)) - 1  # -1 to exclude outlier topic
     num_outliers = sum(1 for t in topics if t == -1)
@@ -106,6 +121,25 @@ def run_topic_modeling(input_csv, output_csv, output_dir, model_name, embeddings
     print(f"✓ Topic modeling complete!")
     print(f"  - Number of topics: {num_topics}")
     print(f"  - Outlier documents: {num_outliers} ({num_outliers/len(topics)*100:.1f}%)")
+    print(f"{'='*50}\n")
+
+    # ========================================
+    # COHERENCE METRIC (c_v)
+    # ========================================
+    print("Calculating topic coherence (c_v)...")
+    texts_tokenized = [text.split() for text in texts]
+    dictionary = Dictionary(texts_tokenized)
+    topic_words_dict = topic_model.get_topics()
+    topic_words = [[word for word, _ in topic_words_dict[i]] for i in topic_words_dict if i != -1]
+    cm = CoherenceModel(
+        topics=topic_words,
+        texts=texts_tokenized,
+        dictionary=dictionary,
+        coherence='c_v'
+    )
+    coherence = cm.get_coherence()
+    print(f"\n{'='*50}")
+    print(f"  - Topic coherence (c_v): {coherence:.4f}")
     print(f"{'='*50}\n")
 
     # Save results

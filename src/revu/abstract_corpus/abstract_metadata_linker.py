@@ -2,6 +2,168 @@ import pandas as pd
 import os
 
 
+def validate_and_link_metadata(
+    metadata_deduplicated_csv,
+    topic_model_csv,
+    validated_metadata_csv,
+    log_file=None
+):
+    """
+    Validate one-to-one ID matching between deduplicated metadata and topic model data,
+    then save matched records to a validated metadata CSV.
+
+    Each topic model record is expected to have at most one matching metadata record.
+    Metadata records with no topic model match are excluded from the output.
+    Topic model records with no metadata match are reported (expected for some records).
+
+    Args:
+        metadata_deduplicated_csv (str): Path to deduplicated metadata CSV (input)
+        topic_model_csv (str): Path to topic model CSV (input)
+        validated_metadata_csv (str): Path to output CSV with validated (matched) records
+        log_file (str, optional): Path to log file
+
+    Returns:
+        pd.DataFrame: Validated metadata DataFrame (records with a 1:1 topic model match)
+    """
+
+    print("\n" + "="*70)
+    print("METADATA VALIDATION AND LINKING")
+    print("="*70)
+
+    # ========================================
+    # STEP 1: Load deduplicated metadata
+    # ========================================
+    print("\n" + "="*70)
+    print("STEP 1: Loading deduplicated metadata")
+    print("="*70)
+
+    print(f"Reading metadata from: {metadata_deduplicated_csv}")
+    metadata_df = pd.read_csv(metadata_deduplicated_csv, dtype=str).fillna('')
+    print(f"  Loaded {len(metadata_df)} records, {len(metadata_df.columns)} columns")
+
+    metadata_id_col = next((col for col in metadata_df.columns if col.lower() == 'id'), None)
+    if metadata_id_col is None:
+        raise ValueError("No 'id' column found in deduplicated metadata CSV")
+    metadata_df[metadata_id_col] = metadata_df[metadata_id_col].astype(str).str.strip()
+
+    # ========================================
+    # STEP 2: Load topic model data
+    # ========================================
+    print("\n" + "="*70)
+    print("STEP 2: Loading topic model data")
+    print("="*70)
+
+    print(f"Reading topic model from: {topic_model_csv}")
+    topic_df = pd.read_csv(topic_model_csv, dtype=str)
+    print(f"  Loaded {len(topic_df)} records")
+
+    topic_id_col = next((col for col in topic_df.columns if col.lower() == 'id'), None)
+    if topic_id_col is None:
+        raise ValueError("No 'id' column found in topic model CSV")
+    topic_ids = set(topic_df[topic_id_col].astype(str).str.strip())
+
+    # ========================================
+    # STEP 3: Validate one-to-one matching
+    # ========================================
+    print("\n" + "="*70)
+    print("STEP 3: Validating one-to-one ID matching")
+    print("="*70)
+
+    metadata_ids = set(metadata_df[metadata_id_col])
+    matching_ids = topic_ids & metadata_ids
+    topic_only_ids = topic_ids - metadata_ids       # expected for some records
+    metadata_only_ids = metadata_ids - topic_ids    # excluded from output
+
+    print(f"\n  One-to-One Match Validation:")
+    print(f"    Topic model records:    {len(topic_ids)}")
+    print(f"    Deduplicated metadata:  {len(metadata_ids)}")
+    print(f"    Matched (1:1):          {len(matching_ids)}")
+
+    if topic_only_ids:
+        print(f"\n  ℹ Topic model records with no metadata match: {len(topic_only_ids)}")
+        print(f"    (Expected — not all topic model records have source metadata)")
+        if len(topic_only_ids) <= 10:
+            print(f"    IDs: {sorted(topic_only_ids)}")
+        else:
+            print(f"    First 10: {sorted(topic_only_ids)[:10]}")
+    else:
+        print(f"\n  ✓ Every topic model record has a matching metadata record")
+
+    if metadata_only_ids:
+        print(f"\n  ℹ Metadata records with no topic model match: {len(metadata_only_ids)}")
+        print(f"    These will be excluded from the validated output")
+    else:
+        print(f"  ✓ Every metadata record has a corresponding topic model record (1:1)")
+
+    match_pct = len(matching_ids) / len(topic_ids) * 100 if topic_ids else 0
+    if match_pct == 100:
+        print(f"\n  ✅ PERFECT 1:1 MATCH: All topic model records linked to metadata")
+    elif match_pct >= 95:
+        print(f"\n  ✓ GOOD MATCH: {match_pct:.1f}% of topic model records linked to metadata")
+    else:
+        print(f"\n  ⚠ LOW MATCH: Only {match_pct:.1f}% of topic model records linked to metadata")
+
+    # ========================================
+    # STEP 4: Save validated metadata
+    # ========================================
+    print("\n" + "="*70)
+    print("STEP 4: Saving validated metadata")
+    print("="*70)
+
+    validated_df = metadata_df[metadata_df[metadata_id_col].isin(matching_ids)].copy()
+    validated_df.to_csv(validated_metadata_csv, index=False)
+    print(f"  ✓ Saved {len(validated_df)} validated records to: {validated_metadata_csv}")
+
+    # ========================================
+    # STEP 5: Write log file (optional)
+    # ========================================
+    if log_file:
+        print("\n" + "="*70)
+        print("STEP 5: Writing log file")
+        print("="*70)
+
+        if os.path.isdir(log_file):
+            log_file = os.path.join(log_file, 'metadata_validation_log.txt')
+
+        log_messages = [
+            "="*70,
+            "METADATA VALIDATION AND LINKING LOG",
+            "="*70,
+            "",
+            "INPUT FILES:",
+            f"  Deduplicated metadata: {metadata_deduplicated_csv}",
+            f"  Topic model CSV:       {topic_model_csv}",
+            "",
+            "ONE-TO-ONE MATCH VALIDATION:",
+            f"  Topic model records:                     {len(topic_ids)}",
+            f"  Deduplicated metadata records:           {len(metadata_ids)}",
+            f"  Matched (1:1):                           {len(matching_ids)} ({match_pct:.1f}%)",
+            f"  Topic model records with no metadata:    {len(topic_only_ids)} (expected)",
+            f"  Metadata records with no topic model:    {len(metadata_only_ids)} (excluded)",
+            "",
+            "OUTPUT FILES:",
+            f"  Validated metadata: {validated_metadata_csv}",
+            "="*70,
+        ]
+
+        with open(log_file, 'w') as f:
+            for msg in log_messages:
+                f.write(msg + '\n')
+
+        print(f"  ✓ Log file saved to: {log_file}")
+
+    print("\n" + "="*70)
+    print("✅ METADATA VALIDATION AND LINKING COMPLETE!")
+    print("="*70)
+    print(f"\nOutput files:")
+    print(f"  1. Validated metadata: {validated_metadata_csv}")
+    if log_file:
+        print(f"  2. Log file: {log_file}")
+    print("")
+
+    return validated_df
+
+
 def extract_and_deduplicate_metadata(
     original_csv_files,
     metadata_csv,
@@ -266,11 +428,11 @@ def extract_and_deduplicate_metadata(
     print(f"\n✓ Deduplicated metadata saved to: {metadata_deduplicated_csv}")
 
     # ========================================
-    # STEP 7: Validate ID matching with topic model (optional)
+    # STEP 7: Validate one-to-one ID matching with topic model (optional)
     # ========================================
     if topic_ids_filter is not None:
         print("\n" + "="*70)
-        print("STEP 7: Validating ID matching with topic model data")
+        print("STEP 7: Validating one-to-one ID matching with topic model data")
         print("="*70)
 
         # Find ID column in metadata
@@ -286,42 +448,39 @@ def extract_and_deduplicate_metadata(
             # Compare IDs
             metadata_ids = set(merged_metadata[metadata_id_col].astype(str).str.strip())
 
-            print(f"\n  ID Matching Analysis:")
-            print(f"    Topic model IDs: {len(topic_ids_filter)}")
-            print(f"    Metadata IDs: {len(metadata_ids)}")
-
             # Find matching and non-matching IDs
             matching_ids = topic_ids_filter & metadata_ids
-            topic_only_ids = topic_ids_filter - metadata_ids
-            metadata_only_ids = metadata_ids - topic_ids_filter
+            topic_only_ids = topic_ids_filter - metadata_ids  # topic model records with no metadata (expected)
+            metadata_only_ids = metadata_ids - topic_ids_filter  # should be empty after filtering
 
-            print(f"\n  Matching Results:")
-            print(f"    ✓ Matching IDs: {len(matching_ids)} ({len(matching_ids)/len(topic_ids_filter)*100:.1f}% of topic model)")
+            print(f"\n  One-to-One Match Validation:")
+            print(f"    Topic model records:    {len(topic_ids_filter)}")
+            print(f"    Deduplicated metadata:  {len(metadata_ids)}")
+            print(f"    Matched (1:1):          {len(matching_ids)}")
 
             if topic_only_ids:
-                print(f"    ⚠ IDs in topic model but NOT in metadata: {len(topic_only_ids)}")
+                print(f"\n  ℹ Topic model records with no metadata match: {len(topic_only_ids)}")
+                print(f"    (Expected — not all topic model records have source metadata)")
                 if len(topic_only_ids) <= 10:
-                    print(f"      {list(topic_only_ids)[:10]}")
+                    print(f"    IDs: {sorted(topic_only_ids)}")
                 else:
-                    print(f"      First 10: {list(topic_only_ids)[:10]}")
+                    print(f"    First 10: {sorted(topic_only_ids)[:10]}")
             else:
-                print(f"    ✓ All topic model IDs found in metadata")
+                print(f"\n  ✓ Every topic model record has a matching metadata record")
 
             if metadata_only_ids:
-                print(f"    ⚠ IDs in metadata but NOT in topic model: {len(metadata_only_ids)}")
-                print(f"      This should not happen - metadata was filtered to topic model IDs")
+                print(f"\n  ⚠ Metadata records with no topic model match: {len(metadata_only_ids)}")
+                print(f"    This should not happen — metadata was filtered to topic model IDs")
             else:
-                print(f"    ✓ No extra metadata IDs")
+                print(f"  ✓ Every metadata record has a corresponding topic model record (1:1)")
 
-            # Calculate match percentage
             match_pct = len(matching_ids) / len(topic_ids_filter) * 100 if topic_ids_filter else 0
             if match_pct == 100:
-                print(f"\n  ✅ PERFECT MATCH: All topic model IDs can be linked with metadata")
+                print(f"\n  ✅ PERFECT 1:1 MATCH: All topic model records linked to metadata")
             elif match_pct >= 95:
-                print(f"\n  ✓ GOOD MATCH: {match_pct:.1f}% of topic model IDs can be linked")
+                print(f"\n  ✓ GOOD MATCH: {match_pct:.1f}% of topic model records linked to metadata")
             else:
-                print(f"\n  ⚠ WARNING: Only {match_pct:.1f}% of topic model IDs can be linked")
-                print(f"     Some topic model IDs are missing from original metadata files")
+                print(f"\n  ⚠ LOW MATCH: Only {match_pct:.1f}% of topic model records linked to metadata")
 
     # ========================================
     # STEP 8: Write log file

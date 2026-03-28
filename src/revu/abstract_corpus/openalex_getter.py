@@ -7,9 +7,9 @@ API_KEY     = "MEyGPb6mG78k6SjsFqUZCN"
 SEARCH_STR  = "https://api.openalex.org/works?page=1&filter=title_and_abstract.search:(%22causal+inference%22)+AND+(%22urban+health%22+OR+%22urban+plan*%22+OR+%22urban+environment%22+OR+%22mobility%22+OR+%22geospatial%22+OR+%22spatial%22+OR+%22transport%22+OR+%22environm*%22+OR+%22built+environ*%22),type:article|dissertation|preprint|book-chapter|report|book-section&sort=relevance_score:desc&per_page=10&include_xpac=true&mailto=ui@openalex.org"   
 OUTPUT_FILE = "openalex_CAUSALurbanhealth_results_25052026.csv"
 
-SEARCH_STR  = '("causal inference" OR "causal*") AND ("urban health" OR "urban plan*" OR "urban environment" OR "policy" OR "mobility" OR "geospatial" OR "spatial" OR "transport" OR "environm*" OR "built environ*")'
-
-TYPE_FILTER = "article|dissertation|preprint|book-chapter|report|book-section"
+SEARCH_STR  = '("Causal inference" OR "causal effect" OR "causal effects" OR "causal analysis" OR "causal model" OR "causality" OR "causal relationship" OR "Counterfactual*" OR "potential outcome*" OR "propensity score" OR "instrumental variable" OR "instrumental variables" OR "difference-in-difference" OR "difference-in-differences" OR "regression discontinuity" OR "matching estimator" OR "directed acyclic graph" OR "DAG" OR "structural equation model")'
+TYPE_FILTER = "article|dissertation|preprint|book-chapter|book-section"
+DATE_FILTER = "from_publication_date:1900-01-01,to_publication_date:2025-12-16"
 
 SELECT_FIELDS = ",".join([
     "id",
@@ -94,7 +94,7 @@ def flatten_record(r: dict) -> dict:
 def fetch_all(api_key: str) -> list[dict]:
     """Page through all results using cursor pagination."""
     params = {
-        "filter":   f"title_and_abstract.search:{SEARCH_STR},type:{TYPE_FILTER}",
+        "filter": f"title_and_abstract.search:{SEARCH_STR},type:{TYPE_FILTER},{DATE_FILTER}",
         "select":   SELECT_FIELDS,
         "sort":     "relevance_score:desc",
         "per_page": 200,

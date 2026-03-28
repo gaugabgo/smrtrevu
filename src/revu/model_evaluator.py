@@ -107,9 +107,9 @@ def main():
 
     # Define parameter grid for evaluation
     param_grid = ParameterGrid({
-    "min_cluster_size": [75, 100, 125],
-    "n_neighbors": [40, 50, 60],
-    "n_components": [10]
+    "min_cluster_size": [100, 200, 300, 500],
+    "n_neighbors": [15, 50],
+    "n_components": [5, 15]
     })
 
     logger.info(f"\n{'='*60}")
@@ -154,6 +154,8 @@ def main():
             hdbscan_model=hdbscan_model,
             vectorizer_model=vectorizer_model,
             representation_model=representation_model,
+            low_memory=True,
+            calculate_probabilities=False,
             verbose=False
         )
 
