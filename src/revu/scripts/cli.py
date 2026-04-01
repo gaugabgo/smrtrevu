@@ -13,6 +13,8 @@ from revu.scripts.cli_link_metadata import link_metadata
 from revu.scripts.cli_bibliographicanalysis import run_bibliometric_analysis, build_network
 from revu.scripts.cli_visu_bibliographic import visualize_bibliometric
 from revu.scripts.cli_coauthorship import coauthorship_analysis
+from revu.scripts.cli_visu_author_network import visualize_author_network
+from revu.scripts.visu_author_network_dmp_cli import visualize_author_network_dmp
 
 @click.group()
 def cli():
@@ -75,6 +77,8 @@ biblio.add_command(run_bibliometric_analysis, name="analyze")
 biblio.add_command(build_network, name="build-network")
 biblio.add_command(visualize_bibliometric, name="visualize")
 biblio.add_command(coauthorship_analysis, name="coauthorship-analysis")
+biblio.add_command(visualize_author_network, name="visualize-author-network")
+biblio.add_command(visualize_author_network_dmp, name="visualize-author-network-dmp")
 
 cli.add_command(biblio)
 
@@ -250,5 +254,19 @@ revu biblio coauthorship-analysis \
   --min_works_per_topic 15 \
   --analysis_type all \
   --affiliation_mode both  
+
+# DataMapPlot interactive author network (all params; add --static for PNG)
+revu biblio visualize-author-network-dmp \
+  --embeddings data/embeddings_2d.npy \
+  --modeled data/causal_modeled_25Mar2026.csv \
+  --metadata data/causal_metadata_deduplicated.csv \
+  --communities data/coauthorship_results/author_communities.csv \
+  --metrics data/coauthorship_results/author_network_metrics.csv \
+  --topic-info data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
+  --min-papers 5 \
+  --top-label-n 200 \
+  --title "Author Co-authorship within Topics" \
+  --output data/visualizations/author_topic_communities_dmp.html
+
 
 """

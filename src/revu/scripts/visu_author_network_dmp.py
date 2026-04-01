@@ -7,22 +7,29 @@ same semantic space as the BERTopic topic map.
 
 Requires
 --------
-- embeddings_2d.npy      — UMAP 2-D coordinates, one row per paper
-- causal_modeled_*.csv   — paper id + topic assignment
-- metadata_deduplicated.csv — paper id + pipe-separated author names
-- author_communities.csv — author_name + community_id
-- author_network_metrics.csv — author_name + strength (for sizing)
+- embeddings_2d.npy           — UMAP 2-D coordinates, one row per paper
+- modeled_*.csv               — paper id + topic assignment
+- metadata_deduplicated.csv   — paper id + pipe-separated author names
+- author_communities.csv      — author_name + community_id
+- author_network_metrics.csv  — author_name + strength (for sizing)
 
 Usage
 -----
-python src/revu/scripts/visu_author_network_dmp.py \
-  --coauth-dir data/coauthorship_results \
+revu biblio visualize-author-network-dmp \
+  --embeddings data/embeddings_2d.npy \
+  --modeled data/causal_modeled_25Mar2026.csv \
+  --metadata data/metadata_deduplicated.csv \
+  --communities data/coauthorship_results/author_communities.csv \
+  --metrics data/coauthorship_results/author_network_metrics.csv \
   --topic-info data/causalinference_modeled_28Mar2026_topic_info_customlabel.csv \
-  --min-papers 3 \
+  --min-papers 5 \
+  --top-label-n 200 \
+  --title "Author Co-authorship Map" \
   --output data/visualizations/author_topic_communities_dmp.html
+
+Add --static to produce a PNG instead of the default interactive HTML.
 """
 
-import argparse
 from pathlib import Path
 
 import datamapplot
@@ -280,84 +287,3 @@ def visualize_author_dmp(
         print(f"  ✓ Static map saved to {out_path}")
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Author co-authorship map via DataMapPlot (UMAP-positioned)"
-    )
-    parser.add_argument(
-        "--embeddings",
-        default="data/embeddings_2d.npy",
-        help="Path to embeddings_2d.npy",
-    )
-    parser.add_argument(
-        "--modeled",
-        default="data/causal_modeled_25Mar2026.csv",
-        help="Path to modeled CSV (id, topic columns)",
-    )
-    parser.add_argument(
-        "--metadata",
-        default="data/metadata_deduplicated.csv",
-        help="Path to metadata CSV (id, authorships.raw_author_name columns)",
-    )
-    parser.add_argument(
-        "--communities",
-        default="data/coauthorship_results/author_communities.csv",
-    )
-    parser.add_argument(
-        "--metrics",
-        default="data/coauthorship_results/author_network_metrics.csv",
-    )
-    parser.add_argument(
-        "--topic-info",
-        default=None,
-        help="Optional topic_info CSV for named topic labels",
-    )
-    parser.add_argument(
-        "--min-papers",
-        type=int,
-        default=5,
-        help="Exclude authors with fewer than N papers",
-    )
-    parser.add_argument(
-        "--top-label-n",
-        type=int,
-        default=200,
-        help="Number of top authors to label by community",
-    )
-    parser.add_argument(
-        "--output",
-        default="author_network_dmp.html",
-        help="Output file (.html for interactive, .png for static)",
-    )
-    parser.add_argument(
-        "--static",
-        action="store_true",
-        help="Produce a static PNG instead of an interactive HTML",
-    )
-    parser.add_argument(
-        "--title",
-        default="Author Co-authorship Map",
-    )
-    args = parser.parse_args()
-
-    visualize_author_dmp(
-        embeddings_path=args.embeddings,
-        modeled_path=args.modeled,
-        metadata_path=args.metadata,
-        communities_path=args.communities,
-        metrics_path=args.metrics,
-        topic_info_path=args.topic_info,
-        min_papers=args.min_papers,
-        top_label_n=args.top_label_n,
-        output_file=args.output,
-        title=args.title,
-        interactive=not args.static,
-    )
-
-
-if __name__ == "__main__":
-    main()
