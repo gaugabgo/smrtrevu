@@ -8,13 +8,17 @@ from revu.scripts.cli_visualizations import create_visualizations
 from revu.scripts.cli_embeddings import compute_embeddings
 from revu.scripts.cli_reduce_embeddings import reduce_embeddings
 from revu.scripts.cli_preprocessing import preprocess_texts
-from revu.scripts.cli_oa import metadata, download, extract
 from revu.scripts.cli_link_metadata import link_metadata
 from revu.scripts.cli_bibliographicanalysis import run_bibliometric_analysis, build_network
 from revu.scripts.cli_visu_bibliographic import visualize_bibliometric
 from revu.scripts.cli_coauthorship import coauthorship_analysis
 from revu.scripts.cli_visu_author_network import visualize_author_network
 from revu.scripts.visu_author_network_dmp_cli import visualize_author_network_dmp
+from revu.scripts.cli_visu_coauthorship_hub_spoke import visualize_coauth_topic, visualize_coauth_global
+from revu.scripts.cli_agg_within_topic_community_nodes import agg_within_topic_community_nodes
+from revu.scripts.cli_visu_dmp_coauth_overlay import visualize_dmp_coauth_overlay
+from revu.scripts.cli_agg_global_community_topic_affinity import agg_global_community_topic_affinity
+from revu.scripts.cli_visu_topic_community_network import visualize_topic_community_network
 
 @click.group()
 def cli():
@@ -52,20 +56,6 @@ model.add_command(create_visualizations, name="visualize")
 cli.add_command(model)
 
 # ----------------------------
-# OA Downloader Commands
-# ----------------------------
-@click.group()
-def oa():
-    """Open Access article management"""
-    pass
-
-oa.add_command(metadata, name="metadata")
-oa.add_command(download, name="download")
-oa.add_command(extract)
-
-cli.add_command(oa)
-
-# ----------------------------
 # Bibliometric Analysis Commands
 # ----------------------------
 @click.group()
@@ -79,6 +69,12 @@ biblio.add_command(visualize_bibliometric, name="visualize")
 biblio.add_command(coauthorship_analysis, name="coauthorship-analysis")
 biblio.add_command(visualize_author_network, name="visualize-author-network")
 biblio.add_command(visualize_author_network_dmp, name="visualize-author-network-dmp")
+biblio.add_command(visualize_coauth_topic, name="visualize-coauth-topic")
+biblio.add_command(visualize_coauth_global, name="visualize-coauth-global")
+biblio.add_command(agg_within_topic_community_nodes, name="agg-within-topic-community-nodes")
+biblio.add_command(visualize_dmp_coauth_overlay, name="visualize-dmp-coauth-overlay")
+biblio.add_command(agg_global_community_topic_affinity, name="agg-global-community-topic-affinity")
+biblio.add_command(visualize_topic_community_network, name="visualize-topic-community-network")
 
 cli.add_command(biblio)
 
@@ -155,22 +151,14 @@ revu model visualize \
   --input_csv data/causal_modeled_25Mar2026.csv \
   --model_path data/bertopic_model \
   --embeddings_2d_path data/embeddings_2d.npy \
-  --metadata_csv data/metadata_deduplicated.csv \
+  --metadata_csv data/causal_metadata_validated.csv \
+  --label_mode custom \
   --output_dir data
-
-# fetch metadata
-revu oa metadata -i data/BE_DOIs.csv --cache-dir data/ft_import --email gaugabgo.dev@gmail.com
-
-# Download OA PDFs
-revu oa download --input data/ft_import/metadata.csv --cache_dir data/ft_output/oa_pdfs
-
-# Extract from OA PDFs
-revu oa extract --pdf-dir oa_pdfs --output-dir oa_texts
 
 # Run bibliometric analysis
 revu biblio analyze \
-  --topic_csv data/estimand_review/causalinference_modeled_03Jan2026.csv \
-  --metadata_csv data/estimand_review/metadata_deduplicated.csv \
+  --topic_csv data/causal_modeled_25Mar2026.csv \
+  --metadata_csv data/causal_metadata_validated.csv \
   --output_dir data/estimand_review/bibliometric_results \
   --window_size 10 \
   --topic_column topic \
@@ -189,55 +177,59 @@ revu biblio build-network \
   --metadata_csv data/metadata.csv \
   --output_path data/citation_network.graphml
 
-# Generate visualizations from bibliometric analysis results with topic names
+# Generate all visualizations (outlier topics filtered automatically)
 revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
-  --output_dir data/estimand_review/visualizations \
-  --topic_info_file data/estimand_review/causalinference_modeled_03Jan2026_topic_info.csv \
-  --top_n_prevalent 20 
+  --data_dir data/bibliometric_results \
+  --output_dir data/visualizations \
+  --topic_info_file data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
+  --top_n_prevalent 20
 
-# Generate visualizations for top 15 most prevalent topics only
+# Generate all visualizations including geographic map
 revu biblio visualize \
-  --data_dir data/results \
-  --top_n_prevalent 15
+  --data_dir data/bibliometric_results \
+  --output_dir data \
+  --topic_info_file data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
+  --metadata_csv data/causal_metadata_validated.csv
 
-# Generate homophily visualization for most homophilic topics
+# PageRank network with paper satellite nodes
 revu biblio visualize \
-  --data_dir data/results \
-  --viz_type homophily \
-  --top_n_homophilic 10
-
-# Generate trend visualization for growing/declining topics only
-revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
-  --viz_type trends \
-  --top_n_growing 20
-
-  revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
-  --viz_type trends \
-  --bottom_n_declining 10
-
-  revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
+  --data_dir data/bibliometric_results/ \
+  --topic_info_file data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
   --viz_type centrality \
-  --top_n_central 15
+  --top_n_central 15 \
+  --works_file data/causal_modeled_25Mar2026.csv
 
-  revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
-  --viz_type homophily \
-  --top_n_homophilic 10
-
-  revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
-  --viz_type influence \
-  --top_n_influential 10
-
-  revu biblio visualize \
-  --data_dir data/estimand_review/bibliometric_results \
+# Topic Influence graphs
+revu biblio visualize \
+  --data_dir data/bibliometric_results \
   --viz_type influence \
   --top_n_influential 10 \
-  --influence_metric h_index_proxy
+  --normalize_by_works \
+  --min_citations 20
+
+# Trend visualizations
+revu biblio visualize \
+  --data_dir data/bibliometric_results \
+  --viz_type trends \
+  --top_n_each 8 \
+  --sort_spans_by span_length \
+  --color_growing '#d0d1e6' \
+  --color_declining '#67a9cf'
+
+# Geographic map only (static PNG)
+revu biblio visualize \
+  --data_dir data/bibliometric_results \
+  --viz_type geo \
+  --metadata_csv data/causal_metadata_validated.csv \
+  --geo_cmap PuBuGn
+
+# Geographic map (interactive HTML, custom colormap)
+revu biblio visualize \
+  --data_dir data/bibliometric_results \
+  --viz_type geo \
+  --metadata_csv data/causal_metadata_validated.csv \
+  --geo_format interactive \
+  --geo_cmap PuBuGn
 
   model evaulator (not part of main cli)
   python src/revu/model_evaluator.py \
@@ -255,18 +247,27 @@ revu biblio coauthorship-analysis \
   --analysis_type all \
   --affiliation_mode both  
 
-# DataMapPlot interactive author network (all params; add --static for PNG)
-revu biblio visualize-author-network-dmp \
-  --embeddings data/embeddings_2d.npy \
-  --modeled data/causal_modeled_25Mar2026.csv \
-  --metadata data/causal_metadata_deduplicated.csv \
-  --communities data/coauthorship_results/author_communities.csv \
-  --metrics data/coauthorship_results/author_network_metrics.csv \
-  --topic-info data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
-  --min-papers 5 \
-  --top-label-n 200 \
-  --title "Author Co-authorship within Topics" \
-  --output data/visualizations/author_topic_communities_dmp.html
+  revu biblio visualize-coauth-topic \
+  --coauthorship-dir data/coauthorship_results \
+  --top-n-topics 10 \
+  --top-k-per-topic 5 \
+  --topic-info-file data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
+  --output data/visualizations/coauth_hub_topic.png
 
+
+revu biblio visualize-coauth-global \
+  --coauthorship-dir data/coauthorship_results \
+  --top-n 100 \
+  --label-top-n 30 \
+  --output data/visualizations/coauth_hub_global.png
+
+revu biblio visualize-dmp-coauth-overlay \
+      --modeled         data/causal_modeled_25Mar2026.csv \
+      --embeddings      data/embeddings_2d.npy \
+      --community-nodes data/within_topic_community_nodes.csv \
+      --topic-info      data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
+      --metadata        data/causal_metadata_validated.csv \
+      --output          data/visualizations/topic_dmp_coauth_overlay.html \
+      --top-k-communities 5
 
 """
