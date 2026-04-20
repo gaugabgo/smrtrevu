@@ -22,3 +22,4 @@ __pycache__/
 /tests/**/*.txt
 .venv
 src/revu/oa_downloader
+src/revu.egg-info
