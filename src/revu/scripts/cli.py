@@ -19,6 +19,8 @@ from revu.scripts.cli_agg_within_topic_community_nodes import agg_within_topic_c
 from revu.scripts.cli_visu_dmp_coauth_overlay import visualize_dmp_coauth_overlay
 from revu.scripts.cli_agg_global_community_topic_affinity import agg_global_community_topic_affinity
 from revu.scripts.cli_visu_topic_community_network import visualize_topic_community_network
+from revu.scripts.cli_openalex import fetch_openalex
+from revu.scripts.cli_evaluate import evaluate_model
 
 @click.group()
 def cli():
@@ -33,6 +35,7 @@ cli.add_command(preprocess_and_save_command, name="preprocess")
 cli.add_command(cli_merge_csv_files, name="merge")
 cli.add_command(cli_deduplicate_csv, name="deduplicate")
 cli.add_command(link_metadata, name="extract-metadata")
+cli.add_command(fetch_openalex, name="fetch-openalex")
 
 # ----------------------------
 # Preprocessing (text) Command
@@ -52,6 +55,7 @@ model.add_command(compute_embeddings, name="embed")
 model.add_command(reduce_embeddings, name="reduce")
 model.add_command(run_topic_modeling, name="fit")
 model.add_command(create_visualizations, name="visualize")
+model.add_command(evaluate_model, name="evaluate")
 
 cli.add_command(model)
 

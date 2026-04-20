@@ -1,113 +1,67 @@
-# 📚 Revu CLI Toolkit
+# Revu
 
-**Revu** is your all-in-one command-line toolkit for:
+Revu is a command-line toolkit for systematic literature review. It covers the full pipeline from raw citation exports to interactive topic maps and bibliometric visualizations — designed for researchers who want reproducible, scriptable workflows without writing custom code.
 
-- 🧾 Parsing citation files (NBIB & RIS)  
-- 🧹 Cleaning & merging metadata  
-- 🧠 Running topic models with BERTopic  
-- 📥 Downloading and extracting Open Access (OA) PDFs  
+## Capabilities
 
-Whether you're a researcher, developer, or text mining enthusiast — Revu helps you wrangle your literature data with style.
+**Corpus management** — Option to retrieve article title, abstract, and metadata directly from OpenAlex or to parse citation exports from PubMed (NBIB) and other databases (RIS). Normalize and merge records from multiple sources, and deduplicate by DOI and title.
 
----
+**Topic modeling** — Preprocess abstracts, compute document embeddings, and fit a BERTopic model to identify research themes. The modular pipeline lets you cache embeddings and reuse them across modeling runs. Evaluate the performance of different hyperparameters when fitting a BERTopic model to select the best parameters.
 
-## 🚀 Installation
+**Bibliometric and co-authorship analysis** — Analyze citation networks, topic influence, and temporal trends. Map author collaboration patterns and generate publication-quality visualizations.
+
+## Requirements
+
+- Python 3.11+
+- spaCy English model: `python -m spacy download en_core_web_sm`
+
+See [Installation](docs/installation.md) for full setup instructions.
+
+## Installation
 
 ```bash
+git clone https://github.com/your-org/revu.git
+cd revu
 pip install -e .
+python -m spacy download en_core_web_sm
 ```
 
-> Make sure you're in the root directory of the `revu` project with a valid `setup.py` or `pyproject.toml`.
+## Quick Start
 
----
-
-## 🧾 Citation Parsing
+The following example goes from raw citation files to a topic model in five steps:
 
 ```bash
-# Parse NBIB files
-revu parse nbib data/abstract_import/nbib_raw data/abstract_output/nbib_parsed nbibparsed.csv
+# 1. Parse citation exports
+revu parse nbib data/raw/ data/parsed/ citations.csv
 
-# Parse RIS files
-revu parse ris data/abstract_import/ris_raw data/abstract_output/ris_parsed risparsed.csv
+# 2. Merge and deduplicate
+revu merge -i "data/parsed/*.csv" -o data/merged.csv
+revu deduplicate -i data/merged.csv -o data/dedup.csv -l data/dedup.log
+
+# 3. Preprocess abstracts
+revu preprocess-texts --source-type abstract --input-path data/dedup.csv
+
+# 4. Fit a topic model
+revu model embed --input_csv data/processed_dedup.csv --output_path data/embeddings.npy
+revu model fit --input_csv data/processed_dedup.csv --embeddings_path data/embeddings.npy --output_csv data/topics.csv
+
+# 5. Visualize
+revu model reduce --embeddings_path data/embeddings.npy --output_path data/embeddings_2d.npy
+revu model visualize --input_csv data/topics.csv --model_path data/model_output/ --embeddings_2d_path data/embeddings_2d.npy
 ```
 
----
+## Documentation
 
-## 🧼 Citation Preprocessing
+| Document | Description |
+|---|---|
+| [Installation](docs/installation.md) | Full setup, dependencies, and environment notes |
+| [Quick Start](docs/quickstart.md) | End-to-end walkthrough with a real example |
+| [CLI Reference](docs/cli-reference.md) | All commands, options, and flags |
+| [Citation Pipeline](docs/workflows/citation-pipeline.md) | Parsing, merging, and deduplication |
+| [Topic Modeling](docs/workflows/topic-modeling.md) | Embedding, fitting, and visualization |
+| [Bibliometric Analysis](docs/workflows/bibliometric-analysis.md) | Citation networks, influence, and trends |
+| [Co-authorship Analysis](docs/workflows/coauthorship-analysis.md) | Author networks and community detection |
 
-```bash
-# Normalize RIS files
-revu preprocess data/abstract_import/raw_EBSCO_ris data/abstract_output/normalized_ris
+## License
 
-# Merge multiple parsed CSVs
-revu merge
-
-# Deduplicate merged citations
-revu deduplicate
-```
-
----
-
-## 🧠 Topic Modeling (BERTopic FTW)
-
-```bash
-# Train a BERTopic model
-revu model run --input_csv parsed.csv --output_csv topics.csv
-
-# Visualize your topic landscape
-revu model visualize --input_csv topics.csv
-```
-
----
-
-## 📂 Open Access (OA) Workflow
-
-```bash
-# Download PDFs via Unpaywall
-revu oa download -i dois.txt -o metadata.csv --email you@example.com
-
-# Extract text from downloaded PDFs
-revu oa extract --pdf-dir oa_pdfs --output-dir oa_texts
-```
-
----
-
-## 🤖 CLI Structure
-
-Revu is modular and click-powered:
-
-```bash
-revu [parse|preprocess|merge|deduplicate|model|oa]
-```
-
-- `parse` – Parse `.nbib` or `.ris` citation files  
-- `preprocess` – Normalize messy citation formats  
-- `merge` – Combine multiple CSVs  
-- `deduplicate` – Remove redundant records  
-- `model` – Run and visualize topic modeling  
-- `oa` – Download and extract Open Access content  
-
----
-
-## 🧙‍♂️ Pro Tips
-
-- Use `--help` with any subcommand for options.  
-- Plug it into a pipeline for scalable workflows.  
-- Works great with `make`, `snakemake`, or a dash of Python scripting.
-
----
-
-## 💬 Feedback
-
-We love ideas, bugs, and pull requests! 🐛  
-Feel free to open an issue or start a discussion.
-
----
-
-## 🧾 License
-
-MIT (or your preferred license)
-
----
-
-✨ Happy parsing, modeling, and discovering!
+MIT

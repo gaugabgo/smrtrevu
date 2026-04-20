@@ -91,10 +91,16 @@ def flatten_record(r: dict) -> dict:
     }
 
 
-def fetch_all(api_key: str) -> list[dict]:
+def fetch_all(
+    api_key: str,
+    search_str: str = SEARCH_STR,
+    type_filter: str = TYPE_FILTER,
+    date_filter: str = DATE_FILTER,
+) -> list[dict]:
     """Page through all results using cursor pagination."""
+    filter_str = f"title_and_abstract.search:{search_str},type:{type_filter},{date_filter}"
     params = {
-        "filter": f"title_and_abstract.search:{SEARCH_STR},type:{TYPE_FILTER},{DATE_FILTER}",
+        "filter": filter_str,
         "select":   SELECT_FIELDS,
         "sort":     "relevance_score:desc",
         "per_page": 200,
