@@ -23,3 +23,8 @@ __pycache__/
 .venv
 src/revu/oa_downloader
 src/revu.egg-info
+tests
+run_tests.sh
+setup.cfg
+test.py
+requirements.txt
