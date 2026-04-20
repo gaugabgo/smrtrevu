@@ -513,6 +513,8 @@ def create_visualizations(input_csv, model_path, output_dir, embeddings_2d_path,
                     hover_parts.append(f"Citation Count: {row['cited_by_count']}")
                 if 'DOI' in row and row['DOI']:
                     hover_parts.append(f"Link: https://doi.org/{row['DOI']}")
+                if 'abstract' in row and pd.notna(row['abstract']) and row['abstract']:
+                    hover_parts.append(f"Abstract: {row['abstract']}")
 
                 hover_texts.append('\n'.join(hover_parts))
 

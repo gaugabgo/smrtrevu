@@ -17,8 +17,6 @@ from revu.scripts.visu_author_network_dmp_cli import visualize_author_network_dm
 from revu.scripts.cli_visu_coauthorship_hub_spoke import visualize_coauth_topic, visualize_coauth_global
 from revu.scripts.cli_agg_within_topic_community_nodes import agg_within_topic_community_nodes
 from revu.scripts.cli_visu_dmp_coauth_overlay import visualize_dmp_coauth_overlay
-from revu.scripts.cli_agg_global_community_topic_affinity import agg_global_community_topic_affinity
-from revu.scripts.cli_visu_topic_community_network import visualize_topic_community_network
 from revu.scripts.cli_openalex import fetch_openalex
 from revu.scripts.cli_evaluate import evaluate_model
 
@@ -77,8 +75,6 @@ biblio.add_command(visualize_coauth_topic, name="visualize-coauth-topic")
 biblio.add_command(visualize_coauth_global, name="visualize-coauth-global")
 biblio.add_command(agg_within_topic_community_nodes, name="agg-within-topic-community-nodes")
 biblio.add_command(visualize_dmp_coauth_overlay, name="visualize-dmp-coauth-overlay")
-biblio.add_command(agg_global_community_topic_affinity, name="agg-global-community-topic-affinity")
-biblio.add_command(visualize_topic_community_network, name="visualize-topic-community-network")
 
 cli.add_command(biblio)
 
@@ -269,6 +265,7 @@ revu biblio visualize-dmp-coauth-overlay \
       --modeled         data/causal_modeled_25Mar2026.csv \
       --embeddings      data/embeddings_2d.npy \
       --community-nodes data/within_topic_community_nodes.csv \
+      --title           "Topics in the Causal Inference Literature" \
       --topic-info      data/causal_modeled_1Apr2026_topic_info_customlabels.csv \
       --metadata        data/causal_metadata_validated.csv \
       --output          data/visualizations/topic_dmp_coauth_overlay.html \

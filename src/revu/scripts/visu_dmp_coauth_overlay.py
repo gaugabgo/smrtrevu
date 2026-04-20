@@ -47,7 +47,7 @@ _RANK_COLORS = [
     "#708090",  
 ]
 
-_RADIUS_PX = 6  # fixed bubble CSS-pixel radius
+_RADIUS_PX = 9  # fixed bubble CSS-pixel radius
 
 
 # ---------------------------------------------------------------------------
@@ -141,13 +141,11 @@ def _build_community_node_records(
 
     radius_px = np.full(len(community_nodes), _RADIUS_PX, dtype=float)
 
-    _ordinals = ["1st", "2nd", "3rd", "4th", "5th"]
-
     records = []
     for i, row in community_nodes.iterrows():
         rank = int(row["rank"])
         color = _RANK_COLORS[min(rank, len(_RANK_COLORS) - 1)]
-        ordinal = _ordinals[min(rank, len(_ordinals) - 1)]
+        ordinal = _ORDINALS[min(rank, len(_ORDINALS) - 1)]
         top_authors = str(row.get("top_authors", ""))
 
         records.append({
@@ -169,7 +167,16 @@ def _build_community_node_records(
 # Injected HTML / JS / CSS
 # ---------------------------------------------------------------------------
 
-_TOGGLE_PANEL_HTML = """
+_ORDINALS = ["1st", "2nd", "3rd", "4th", "5th"]
+
+
+def _build_toggle_panel_html() -> str:
+    legend_rows = "\n".join(
+        f'    <span style="color:{color};font-size:16px;">●</span>'
+        f' {_ORDINALS[i]} co-authorship community<br>'
+        for i, color in enumerate(_RANK_COLORS)
+    )
+    return f"""
 <div id="coauth-panel"
      style="position:fixed;bottom:32px;left:20px;z-index:300;
             background:rgba(255,255,255,0.93);border-radius:10px;
@@ -184,11 +191,7 @@ _TOGGLE_PANEL_HTML = """
   </label>
   <div id="coauth-legend"
        style="display:none;margin-top:9px;font-size:11px;line-height:1.8;">
-    <span style="color:#E63946;font-size:16px;">●</span> 1st co-authorship community<br>
-    <span style="color:#2196F3;font-size:16px;">●</span> 2nd co-authorship community<br>
-    <span style="color:#4CAF50;font-size:16px;">●</span> 3rd co-authorship community<br>
-    <span style="color:#FF9800;font-size:16px;">●</span> 4th co-authorship community<br>
-    <span style="color:#9C27B0;font-size:16px;">●</span> 5th co-authorship community<br>
+{legend_rows}
     <div style="margin-top:4px;color:#555;">Hover for details</div>
   </div>
 </div>
@@ -197,8 +200,7 @@ _TOGGLE_PANEL_HTML = """
             color:#fff;padding:9px 13px;border-radius:7px;font-size:12px;
             max-width:320px;z-index:400;pointer-events:none;
             line-height:1.5;font-family:sans-serif;"></div>
-"""
-
+""" 
 _TOGGLE_CSS = """
 #coauth-panel input[type=checkbox] { accent-color: #E63946; }
 """
@@ -352,7 +354,7 @@ def create_dmp_with_coauth_overlay(
     output_path: str,
     topic_info_path: str | None = None,
     metadata_path: str | None = None,
-    title: str = "BERTopic Model of the Causal Inference Literature",
+    title: str = "Topics in the Causal Inference Literature",
     noise_label: str = "Outlier",
     top_k_communities: int | None = None,
 ) -> None:
@@ -435,7 +437,7 @@ def create_dmp_with_coauth_overlay(
     # 3. Build injection strings
     # ------------------------------------------------------------------
     overlay_js  = _build_overlay_js(node_records)
-    toggle_html = _TOGGLE_PANEL_HTML
+    toggle_html = _build_toggle_panel_html()
     toggle_css  = _TOGGLE_CSS
 
     # ------------------------------------------------------------------
@@ -448,8 +450,7 @@ def create_dmp_with_coauth_overlay(
         hover_text=hover_text,
         title=title,
         sub_title=(
-            f"Interactive topic map · {len(coords):,} papers  |  "
-            f"toggle co-authorship communities below"
+            f"Interactive data map of BERTopic-extracted topics and within-topic co-authorship communities"
         ),
         noise_label=noise_label,
         enable_search=False,

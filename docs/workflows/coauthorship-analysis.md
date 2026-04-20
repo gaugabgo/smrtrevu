@@ -124,6 +124,33 @@ revu biblio visualize-dmp-coauth-overlay \
   --output data/visualizations/topic_dmp_coauth_overlay.html
 ```
 
+#### How community node positions are computed
+
+Each bubble in the overlay is a **community centroid** computed in two stages.
+
+**Stage 1 — Aggregation (raw UMAP space)**
+
+`agg-within-topic-community-nodes` processes each `topic_N/` sub-directory independently:
+
+1. For every author in the topic's `author_communities.csv`, look up their community ID.
+2. Join those authors to `author_paper_edges.csv` to get the papers they contributed to within that topic.
+3. Look up each paper's 2D UMAP coordinate from `embeddings_2d.npy`.
+4. The community node position is the **mean (x, y) of those papers** — i.e. the centroid of the papers co-authored by members of that community within the topic.
+
+Because UMAP places thematically similar papers near each other, communities that collaborate heavily on the core papers of a topic sit near that topic's centre; communities whose members mostly wrote papers at the periphery sit closer to the edge.
+
+**Stage 2 — Coordinate transform (DMP render space)**
+
+`datamapplot` does not use raw UMAP coordinates internally. Before rendering it applies:
+
+```
+dmp_coord = (30.0 / raw_data_scale) × (raw_coord − mean(all_raw_coords))
+```
+
+where `raw_data_scale = max(x_extent, y_extent)` of the 99.9th-percentile bounds of the full embedding. This centres the cloud on `(0, 0)` and normalises it so the longest axis spans ±15 units — the coordinate space deck.gl's viewport uses.
+
+`visualize-dmp-coauth-overlay` computes the same `coord_mean` and `raw_data_scale` from `embeddings_2d.npy` and applies the identical formula to each community node before writing it into the HTML. The deck.gl `vp.project()` call in the injected JavaScript then converts those normalised coordinates to screen pixels, so each bubble tracks its cluster correctly at any zoom level.
+
 ### Topic-community network
 
 An interactive network graph showing the relationship between research topics and author communities:

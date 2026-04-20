@@ -21,3 +21,4 @@ __pycache__/
 *.xml
 /tests/**/*.txt
 .venv
+src/revu/oa_downloader

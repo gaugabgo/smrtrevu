@@ -129,10 +129,13 @@ class TopicBibliometricAnalyzer:
         G = self.citation_network
         
         # Compute node-level centralities
+        # The in-degree centrality for a node v is the fraction of nodes its incoming edges are connected to.
         in_degree_cent = nx.in_degree_centrality(G)
+        # The out-degree centrality for a node v is the fraction of nodes its outgoing edges are connected to.
         out_degree_cent = nx.out_degree_centrality(G)
         
         # PageRank as a prestige measure
+        # PageRank computes a ranking of the nodes in the graph G based on the structure of the incoming links.
         try:
             pagerank = nx.pagerank(G, alpha=0.85, max_iter=100)
         except:
