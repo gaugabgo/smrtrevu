@@ -79,7 +79,7 @@ def _load_topic_labels(modeled_path: str, topic_info_path: str | None) -> list[s
 
 def _load_hover_text(modeled_path: str, metadata_path: str | None, labels: list[str]) -> list[str]:
     """Build per-paper hover text strings."""
-    modeled = pd.read_csv(modeled_path, usecols=["id", "topic"])
+    modeled = pd.read_csv(modeled_path)
 
     if metadata_path and Path(metadata_path).exists():
         meta = pd.read_csv(metadata_path, dtype=str).fillna("")
@@ -98,11 +98,15 @@ def _load_hover_text(modeled_path: str, metadata_path: str | None, labels: list[
             ("title",                        "Title"),
             ("authorships.raw_author_name",  "Authors"),
             ("publication_year",             "Year"),
-            ("cited_by_count",               "Citations"),
+            ("cited_by_count",               "Citation Count"),
         ]:
             val = str(row.get(col, "")).strip()
             if val and val != "nan":
                 parts.append(f"{prefix}: {val}")
+        if 'DOI' in row and row.get('DOI', '') and str(row['DOI']).strip() not in ('', 'nan'):
+            parts.append(f"Link: https://doi.org/{str(row['DOI']).strip()}")
+        if 'abstract' in row and pd.notna(row.get('abstract')) and row.get('abstract'):
+            parts.append(f"Abstract: {row['abstract']}")
         texts.append("\n".join(parts))
     return texts
 
