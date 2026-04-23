@@ -28,3 +28,5 @@ run_tests.sh
 setup.cfg
 test.py
 requirements.txt
+!docs/
+!docs/**

@@ -209,13 +209,17 @@ _TOGGLE_CSS = """
 #coauth-panel input[type=checkbox] { accent-color: #E63946; }
 """
 
-def _build_overlay_js(node_records: list[dict]) -> str:
-    nodes_json = json.dumps(node_records, separators=(",", ":"))
-
+def _build_overlay_js(geojson_filename: str) -> str:
     return f"""
-(function () {{
-  /* ── Community overlay data ── */
-  const NODES = {nodes_json};
+(async function () {{
+  /* ── Community overlay data (fetched from sibling GeoJSON) ── */
+  const _resp = await fetch('./{geojson_filename}');
+  const _fc   = await _resp.json();
+  const NODES = _fc.features.map(f => ({{
+    x: f.geometry.coordinates[0],
+    y: f.geometry.coordinates[1],
+    ...f.properties,
+  }}));
 
   /* ── Canvas element ── */
   const canvas = document.createElement('canvas');
@@ -438,14 +442,41 @@ def create_dmp_with_coauth_overlay(
     node_records = _build_community_node_records(community_nodes, coord_mean, raw_data_scale)
 
     # ------------------------------------------------------------------
-    # 3. Build injection strings
+    # 3. Resolve output path early so sibling files share the same dir
     # ------------------------------------------------------------------
-    overlay_js  = _build_overlay_js(node_records)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.suffix.lower() != ".html":
+        out = out.with_suffix(".html")
+
+    # ------------------------------------------------------------------
+    # 4. Write community nodes as a GeoJSON sibling file (Layer 2)
+    # ------------------------------------------------------------------
+    geojson_name = f"{out.stem}_coauth_communities.geojson"
+    geojson_path = out.parent / geojson_name
+    geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [n["x"], n["y"]]},
+                "properties": {k: v for k, v in n.items() if k not in ("x", "y")},
+            }
+            for n in node_records
+        ],
+    }
+    geojson_path.write_text(json.dumps(geojson, separators=(",", ":")))
+    print(f"  ✓ Community nodes GeoJSON → {geojson_path}")
+
+    # ------------------------------------------------------------------
+    # 5. Build injection strings
+    # ------------------------------------------------------------------
+    overlay_js  = _build_overlay_js(geojson_name)
     toggle_html = _build_toggle_panel_html()
     toggle_css  = _TOGGLE_CSS
 
     # ------------------------------------------------------------------
-    # 4. Render DMP
+    # 6. Render DMP with external data files (Layer 1)
     # ------------------------------------------------------------------
     print(f"\nRendering DataMapPlot for {len(coords):,} papers …")
     fig = datamapplot.create_interactive_plot(
@@ -462,12 +493,9 @@ def create_dmp_with_coauth_overlay(
         custom_html=toggle_html,
         custom_css=toggle_css,
         custom_js=overlay_js,
+        inline_data=False,
+        offline_data_path=out.with_suffix(""),  # sibling files use out.stem as prefix
     )
-
-    out = Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    if out.suffix.lower() != ".html":
-        out = out.with_suffix(".html")
 
     fig.save(str(out))
     print(f"\n✓ Saved to {out}")
