@@ -30,3 +30,7 @@ test.py
 requirements.txt
 !docs/
 !docs/**
+!docs/*.html
+!docs/*.json
+!docs/**/*.html
+!docs/**/*.json
